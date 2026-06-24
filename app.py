@@ -1,15 +1,22 @@
 import os
 import pickle
 import pandas as pd
+import requests
+import streamlit as st
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+from concurrent.futures import ThreadPoolExecutor
 
 if not os.path.exists('similarity.pkl'):
-    movies = pickle.load(open('movie.pkl', 'rb'))
+    movies_temp = pickle.load(open('movie.pkl', 'rb'))
     cv = CountVectorizer(max_features=5000, stop_words='english')
-    vectors = cv.fit_transform(movies['tags']).toarray()
-    similarity = cosine_similarity(vectors)
-    pickle.dump(similarity, open('similarity.pkl', 'wb'))
+    vectors = cv.fit_transform(movies_temp['tags']).toarray()
+    similarity_temp = cosine_similarity(vectors)
+    pickle.dump(similarity_temp, open('similarity.pkl', 'wb'))
+
+movies = pickle.load(open('movie.pkl', 'rb'))
+similarity = pickle.load(open('similarity.pkl', 'rb'))
+
 @st.cache_data
 def fetch_poster(movie_id):
     for attempt in range(5):
@@ -25,6 +32,7 @@ def fetch_poster(movie_id):
         except Exception:
             continue
     return "https://placehold.co/500x750?text=No+Poster"
+
 @st.cache_data
 def fetch_imdb_rating(title):
     for attempt in range(5):
@@ -65,10 +73,10 @@ def recommend(movie):
 
 st.set_page_config(page_title="Movie Recommender", layout="wide")
 st.title('Movie Recommender System')
-
+st.caption("Pick a movie you like and get 5 similar picks")
 
 selected_movie_name = st.selectbox(
-    "Pick a movie you like and get 5 similar picks",
+    "Select your favorite movie",
     movies['title'].values,
 )
 
