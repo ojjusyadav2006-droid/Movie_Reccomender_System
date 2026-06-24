@@ -1,10 +1,15 @@
-import streamlit as st
+import os
 import pickle
-import requests
-from concurrent.futures import ThreadPoolExecutor
+import pandas as pd
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
-movies = pickle.load(open('movie.pkl', 'rb'))
-similarity = pickle.load(open('similarity.pkl', 'rb'))
+if not os.path.exists('similarity.pkl'):
+    movies = pickle.load(open('movie.pkl', 'rb'))
+    cv = CountVectorizer(max_features=5000, stop_words='english')
+    vectors = cv.fit_transform(movies['tags']).toarray()
+    similarity = cosine_similarity(vectors)
+    pickle.dump(similarity, open('similarity.pkl', 'wb'))
 @st.cache_data
 def fetch_poster(movie_id):
     for attempt in range(5):
